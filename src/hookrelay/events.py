@@ -1,6 +1,4 @@
-
-
-
+      
 def summarize_event(event_name : str) -> dict[str,str]:
     
     cleaned_event_name = event_name.strip(' ')
@@ -12,3 +10,4 @@ def summarize_event(event_name : str) -> dict[str,str]:
         "status" : "received",
         "service" : "hookrelay"
     }
+
