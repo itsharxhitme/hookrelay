@@ -9,7 +9,7 @@ def test_get_health():
     response = client.get('/health')
     
     
-    assert response.status_code == 200
+    assert response.status_code == 999
     assert response.json() == {"status":"ok"}
 
 def test_validate_event_valid_data():
