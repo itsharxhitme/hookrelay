@@ -15,5 +15,8 @@ dependencies = [
     
 ]
 [project.optional-dependencies]
-dev = ["pytest","httpx2"]
+dev = ["pytest","pytest-asyncio","httpx2"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
 
