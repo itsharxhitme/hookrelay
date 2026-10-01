@@ -11,8 +11,8 @@ dependencies = [
     "pydantic",
     "sqlalchemy[asyncio]",
     "asyncpg",
-    "alembic"
-    
+    "alembic",
+    "python-dotenv"   
 ]
 [project.optional-dependencies]
 dev = ["pytest","pytest-asyncio","httpx2"]
