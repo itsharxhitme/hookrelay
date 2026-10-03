@@ -1,11 +1,12 @@
-from fastapi import FastAPI
+from fastapi import FastAPI,status
 from pydantic import BaseModel
 from typing import Any
-from hookrelay.services.validation import validate_event_request
+from hookrelay.db.session import session_scope
+from hookrelay.services.ingest import ingest_event
 app = FastAPI()
 
-
-class ValidateEventRequest(BaseModel):
+TENANT_ID = "local-tenant" # TODO(D23): replace with authenticated tenant
+class CreateEventRequest(BaseModel):
     event_type: str
     payload: dict[str,Any]
 
@@ -14,6 +15,11 @@ class ValidateEventRequest(BaseModel):
 def get_health():
     return {"status": "ok"}
 
-@app.post('/validate-event')
-def validate_event(body: ValidateEventRequest):
-    return validate_event_request(body.event_type,body.payload)
+@app.post('/events',status_code=status.HTTP_202_ACCEPTED)
+async def create_event(body: CreateEventRequest):
+    
+    async with session_scope() as session:
+        
+        result = await ingest_event(session = session, tenant_id = TENANT_ID, event_type = body.event_type, payload = body.payload)
+        
+    return result
