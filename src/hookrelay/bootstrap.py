@@ -24,7 +24,7 @@ async def bootstrap() -> None:
         await session.execute(
             text("""
                 INSERT INTO endpoints (id, tenant_id, url ,signing_secret_ref, enabled)
-                V (:id, :tenant_id, :url, :signing_secret_ref, true)
+                VALUES (:id, :tenant_id, :url, :signing_secret_ref, true)
                 ON CONFLICT (id) DO NOTHING
                  """),
             {"id":ENDPOINT_ID, "tenant_id":TENANT_ID, "url":ENDPOINT_URL, "signing_secret_ref":SECRET_REF}
