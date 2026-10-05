@@ -34,3 +34,4 @@ class DeliveryAttempt:
     outcome: Optional[AttemptOutcome] = None
     response_status: Optional[int] = None
     error_summary: Optional[str] = None   
+    
