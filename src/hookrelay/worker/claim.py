@@ -4,17 +4,7 @@ from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 import uuid
 from hookrelay.db.models import DeliveryAttempt
-@dataclass(frozen=True)
-class ClaimedWork:
-    event_id: str
-    endpoint_id: str
-    delivery_id: str
-    payload: bytes
-    attempt_id: str
-    attempt_number: int 
-    lease_token: str
-    lease_expiry: datetime
-        
+from hookrelay.domain import ClaimedWork
 async def claim_one_delivery(session: AsyncSession) -> ClaimedWork | None:
     
     available_delivery = (await session.execute(text(
