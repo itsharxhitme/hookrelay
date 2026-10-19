@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from typing import Literal, Optional
 from datetime import datetime
 
-DeliveryStatus = Literal['pending','success','failure']
+DeliveryStatus = Literal['pending','in_progress','success','failure']
 AttemptOutcome = Literal['failure','success','unknown']
 @dataclass(frozen=True)
 class Event:

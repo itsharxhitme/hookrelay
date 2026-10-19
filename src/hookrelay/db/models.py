@@ -1,6 +1,6 @@
 from datetime import datetime
 from typing import Optional
-from sqlalchemy import ForeignKey, UniqueConstraint, func, LargeBinary
+from sqlalchemy import ForeignKey, UniqueConstraint, func, LargeBinary, DateTime
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 class Base(DeclarativeBase):
@@ -11,7 +11,7 @@ class Tenant(Base):
 
     id: Mapped[str] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(unique=True, nullable=False)
-    created_at: Mapped[datetime] = mapped_column(server_default=func.now())
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone = True),server_default=func.now())
     
 class Endpoint(Base):
     __tablename__ = "endpoints"
@@ -20,7 +20,7 @@ class Endpoint(Base):
     url:Mapped[str] = mapped_column()
     signing_secret_ref :Mapped[str] = mapped_column()
     enabled: Mapped[bool] = mapped_column(default=True)
-    created_at:Mapped[datetime] = mapped_column(server_default=func.now())
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone = True),server_default=func.now())
 
 class Event(Base):
     __tablename__ = "events"
@@ -29,7 +29,7 @@ class Event(Base):
     event_type:Mapped[str] = mapped_column()
     payload:Mapped[bytes] = mapped_column(LargeBinary)
     payload_hash: Mapped[str] = mapped_column()
-    created_at:Mapped[datetime] = mapped_column(server_default=func.now())
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone = True),server_default=func.now())
 
 class Delivery(Base):
     __tablename__ = "deliveries"
@@ -37,11 +37,11 @@ class Delivery(Base):
     event_id: Mapped[str] = mapped_column(ForeignKey("events.id"))
     endpoint_id: Mapped[str] = mapped_column(ForeignKey("endpoints.id"))
     status: Mapped[str] = mapped_column(default="pending")
-    due_time: Mapped[datetime] = mapped_column(server_default=func.now(),index=True)
+    due_time: Mapped[datetime] = mapped_column(DateTime(timezone = True),server_default=func.now(),index=True)
     lease_token: Mapped[Optional[str]] = mapped_column()
-    lease_expiry: Mapped[Optional[datetime]] = mapped_column()
+    lease_expiry: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone = True))
     attempt_count: Mapped[int] = mapped_column(default=0)
-    created_at: Mapped[datetime] = mapped_column(server_default=func.now())
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone = True),server_default=func.now())
 
     __table_args__ = (
         UniqueConstraint('event_id','endpoint_id',name = 'uq_delivery_event_endpoint'),
@@ -52,8 +52,8 @@ class DeliveryAttempt(Base):
     id: Mapped[str] = mapped_column(primary_key=True)
     delivery_id: Mapped[str] = mapped_column(ForeignKey("deliveries.id"))
     attempt_number: Mapped[int] = mapped_column()
-    started_at: Mapped[datetime] = mapped_column(server_default=func.now())
-    finished_at: Mapped[Optional[datetime]] = mapped_column()
+    started_at: Mapped[datetime] =  mapped_column(DateTime(timezone = True),server_default=func.now())
+    finished_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone = True))
     outcome: Mapped[Optional[str]] = mapped_column()
     response_status: Mapped[Optional[int]] = mapped_column()
     error_summary: Mapped[Optional[str]] = mapped_column()

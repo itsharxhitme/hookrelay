@@ -1,8 +1,8 @@
-"""initial schema
+"""initial schema with tz-aware timestamps
 
-Revision ID: 0ab2a6a88909
+Revision ID: 46726fe8c9da
 Revises: 
-Create Date: 2026-09-28 17:38:52.285188
+Create Date: 2026-10-19 16:24:04.511884
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '0ab2a6a88909'
+revision: str = '46726fe8c9da'
 down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -24,7 +24,7 @@ def upgrade() -> None:
     op.create_table('tenants',
     sa.Column('id', sa.String(), nullable=False),
     sa.Column('name', sa.String(), nullable=False),
-    sa.Column('created_at', sa.DateTime(), server_default=sa.text('now()'), nullable=False),
+    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('name')
     )
@@ -34,7 +34,7 @@ def upgrade() -> None:
     sa.Column('url', sa.String(), nullable=False),
     sa.Column('signing_secret_ref', sa.String(), nullable=False),
     sa.Column('enabled', sa.Boolean(), nullable=False),
-    sa.Column('created_at', sa.DateTime(), server_default=sa.text('now()'), nullable=False),
+    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
     sa.ForeignKeyConstraint(['tenant_id'], ['tenants.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
@@ -44,7 +44,7 @@ def upgrade() -> None:
     sa.Column('event_type', sa.String(), nullable=False),
     sa.Column('payload', sa.LargeBinary(), nullable=False),
     sa.Column('payload_hash', sa.String(), nullable=False),
-    sa.Column('created_at', sa.DateTime(), server_default=sa.text('now()'), nullable=False),
+    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
     sa.ForeignKeyConstraint(['tenant_id'], ['tenants.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
@@ -53,11 +53,11 @@ def upgrade() -> None:
     sa.Column('event_id', sa.String(), nullable=False),
     sa.Column('endpoint_id', sa.String(), nullable=False),
     sa.Column('status', sa.String(), nullable=False),
-    sa.Column('due_time', sa.DateTime(), server_default=sa.text('now()'), nullable=False),
+    sa.Column('due_time', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
     sa.Column('lease_token', sa.String(), nullable=True),
-    sa.Column('lease_expiry', sa.DateTime(), nullable=True),
+    sa.Column('lease_expiry', sa.DateTime(timezone=True), nullable=True),
     sa.Column('attempt_count', sa.Integer(), nullable=False),
-    sa.Column('created_at', sa.DateTime(), server_default=sa.text('now()'), nullable=False),
+    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
     sa.ForeignKeyConstraint(['endpoint_id'], ['endpoints.id'], ),
     sa.ForeignKeyConstraint(['event_id'], ['events.id'], ),
     sa.PrimaryKeyConstraint('id'),
@@ -68,8 +68,8 @@ def upgrade() -> None:
     sa.Column('id', sa.String(), nullable=False),
     sa.Column('delivery_id', sa.String(), nullable=False),
     sa.Column('attempt_number', sa.Integer(), nullable=False),
-    sa.Column('started_at', sa.DateTime(), server_default=sa.text('now()'), nullable=False),
-    sa.Column('finished_at', sa.DateTime(), nullable=True),
+    sa.Column('started_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.Column('finished_at', sa.DateTime(timezone=True), nullable=True),
     sa.Column('outcome', sa.String(), nullable=True),
     sa.Column('response_status', sa.Integer(), nullable=True),
     sa.Column('error_summary', sa.String(), nullable=True),
