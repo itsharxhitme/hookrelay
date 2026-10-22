@@ -7,6 +7,8 @@ from hookrelay.hashing import sha256_hex
 from hookrelay.domain import ClaimedWork, SendResult
 from hookrelay.worker.complete import finalize_attempt
 from datetime import datetime, timezone, timedelta
+from hookrelay.worker.policy import MAX_ATTEMPTS
+from dataclasses import replace
 
 def make_result(claimed: ClaimedWork, is_success: bool, status_code: int | None = 200) -> SendResult:
     return SendResult(
@@ -82,9 +84,31 @@ async def test_finalize_attempt_success(claimed_delivery):
     assert attempt.response_status == 200
     assert attempt.finished_at is not None
     
-async def test_finalize_attempt_failure(claimed_delivery):
+async def test_finalize_attempt_retryable_500_schedules_retry(claimed_delivery):
     claimed = claimed_delivery
     result =  make_result(claimed, is_success=False, status_code=500)
+    async with session_scope() as session:
+        response = await finalize_attempt(claimed=claimed,session=session, result=result)
+
+    assert response is True
+    
+    async with session_scope() as session:
+        
+       delivery = await session.get(Delivery, claimed.delivery_id)
+           
+       attempt = await session.get(DeliveryAttempt, claimed.attempt_id)
+        
+    assert delivery.status == 'pending'
+    assert delivery.lease_token is None
+    assert delivery.lease_expiry is None
+    assert delivery.due_time > datetime.now(timezone.utc)
+    assert attempt.outcome == 'failure'
+    assert attempt.response_status == 500
+    assert attempt.finished_at is not None    
+
+async def test_finalize_attempt_terminal_400_marks_failure(claimed_delivery):
+    claimed = claimed_delivery
+    result =  make_result(claimed, is_success=False, status_code=400)
     async with session_scope() as session:
         response = await finalize_attempt(claimed=claimed,session=session, result=result)
 
@@ -100,9 +124,31 @@ async def test_finalize_attempt_failure(claimed_delivery):
     assert delivery.lease_token is None
     assert delivery.lease_expiry is None
     assert attempt.outcome == 'failure'
-    assert attempt.response_status == 500
+    assert attempt.response_status == 400
     assert attempt.finished_at is not None    
 
+async def test_finalize_attempt_exhausted_marks_exhausted(claimed_delivery):
+    claimed = replace(claimed_delivery, attempt_number= MAX_ATTEMPTS)
+
+    result =  make_result(claimed, is_success=False, status_code=500)
+    
+    async with session_scope() as session:
+        response = await finalize_attempt(claimed=claimed,session=session, result=result)
+
+    assert response is True
+    
+    async with session_scope() as session:
+        
+       delivery = await session.get(Delivery, claimed.delivery_id)
+           
+       attempt = await session.get(DeliveryAttempt, claimed.attempt_id)
+        
+    assert delivery.status == 'exhausted'
+    assert delivery.lease_token is None
+    assert delivery.lease_expiry is None
+    assert attempt.outcome == 'failure'
+    assert attempt.response_status == 500
+    assert attempt.finished_at is not None   
 
 async def test_finalize_attempt_stale_token(claimed_delivery):
     claimed = claimed_delivery
@@ -140,6 +186,7 @@ async def test_finalize_attempt_stale_token(claimed_delivery):
 async def test_finalize_twice(claimed_delivery):
     claimed = claimed_delivery
     result =  make_result(claimed, is_success=False, status_code=500)
+    
     async with session_scope() as session:
         response1 = await finalize_attempt(claimed=claimed,session=session, result=result)
     
@@ -154,5 +201,47 @@ async def test_finalize_twice(claimed_delivery):
             
         delivery = await session.get(Delivery, claimed.delivery_id)
         
-    assert delivery.status == 'failure'
+    assert delivery.status == 'pending'
     assert delivery.lease_token is None
+    
+async def test_finalize_attempt_success_does_not_change_due_time(claimed_delivery):
+    
+    claimed = claimed_delivery
+    
+    async with session_scope() as session:
+        
+        original_delivery = await session.get(Delivery, claimed.delivery_id)
+        original_due_time = original_delivery.due_time
+    
+    result = make_result(claimed = claimed, is_success=True)
+    
+    async with session_scope() as session:
+            response = await finalize_attempt(claimed=claimed,session=session, result=result)
+            
+    assert response is True
+    
+    async with session_scope() as session:
+        delivery = await session.get(Delivery, claimed.delivery_id)
+    
+    assert delivery.due_time == original_due_time
+
+async def test_finalize_retryable_status_code_none_schedules_retry(claimed_delivery):
+    
+    claimed = claimed_delivery
+    
+    async with session_scope() as session:
+        
+        original_delivery = await session.get(Delivery, claimed.delivery_id)
+        original_due_time = original_delivery.due_time
+    
+    result = replace(make_result(claimed = claimed, is_success=False, status_code=None),error_summary = "transport error")
+    
+    async with session_scope() as session:
+            response = await finalize_attempt(claimed=claimed,session=session, result=result)
+            
+    assert response is True
+    
+    async with session_scope() as session:
+        delivery = await session.get(Delivery, claimed.delivery_id)
+    
+    assert delivery.status == 'pending'

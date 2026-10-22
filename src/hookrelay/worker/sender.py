@@ -1,5 +1,4 @@
 import httpx2
-import time
 import asyncio
 from datetime import datetime, timezone
 from typing import Optional
@@ -31,7 +30,7 @@ class SecureWebhookSender:
         started_at = datetime.now(timezone.utc)
         timestamp = current_timestamp()
         signature_header = build_signature_header(secret, work.delivery_id, timestamp, work.payload)
-        
+
         
         headers = {
             "Content-Type" : "application/json",

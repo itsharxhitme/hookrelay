@@ -19,11 +19,15 @@ async def receive(request: Request):
     
     signature_header = request.headers.get("x-webhook-signature")
     
+    print(signature_header)
     if signature_header is None:
         return Response(status_code=401)
     
-    if not verify_signature(RECEIVER_SECRET, signature_header, raw_body):
+    verified = verify_signature(RECEIVER_SECRET, signature_header, raw_body)
+    
+    if not verified:
         return Response(status_code= 401)
+    
     behavior = request.headers.get("x-test-behavior")
 
     if behavior == "status_500":
