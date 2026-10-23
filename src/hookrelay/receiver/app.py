@@ -19,7 +19,6 @@ async def receive(request: Request):
     
     signature_header = request.headers.get("x-webhook-signature")
     
-    print(signature_header)
     if signature_header is None:
         return Response(status_code=401)
     
@@ -58,3 +57,20 @@ async def receive(request: Request):
         "body": raw_body
     })
     return Response(status_code=200)
+
+
+@app.get("/receipts")
+async def list_receipts():
+    return {
+        "count": len(RECEIPTS),
+        "receipts": [
+            {"delivery_id": r["delivery_id"], "body_size": len(r["body"])}
+            for r in RECEIPTS
+        ],
+    }
+
+# Test-only endpoint. Not for production use.
+@app.post("/receipts/reset")
+async def reset_receipts():
+    RECEIPTS.clear()
+    return {"status": "cleared"}

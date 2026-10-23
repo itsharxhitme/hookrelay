@@ -35,10 +35,7 @@ def verify_signature(secret: str, header: str, payload) -> bool:
     if len(parts) != 4:
         return False
     version, ts_str, delivery_id, provided_digest = parts
-    print("version - ",version)
-    print("ts_str - ",ts_str)
-    print("delivery_id - ",delivery_id)
-    print("provided_digest - ",provided_digest)
+
     
     if version != VERSION: 
         return False
@@ -53,10 +50,8 @@ def verify_signature(secret: str, header: str, payload) -> bool:
 
     expected = sign_payload(secret, delivery_id, timestamp, payload)
     
-    print("expected -> ", expected)
-    print("provided -> ", provided_digest)
     res = hmac.compare_digest(provided_digest, expected)
-    print(res)
+
     return res
     
     
